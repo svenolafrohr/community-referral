@@ -19,6 +19,12 @@ export function formatReferralBonus(amount: number | null, currency: string): st
   return new Intl.NumberFormat('en-DE', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount)
 }
 
+export function companyInitials(name: string): string {
+  const [first, second] = name.split(/\s+/).filter(Boolean)
+  if (!first) return '?'
+  return second ? `${first[0]}${second[0]}`.toUpperCase() : first.slice(0, 2).toUpperCase()
+}
+
 export function formatPublishedDate(iso: string | null): string {
   if (!iso) return 'Recently added'
   const date = new Date(iso)
