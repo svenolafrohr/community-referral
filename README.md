@@ -15,7 +15,7 @@ Backend-first MVP scaffold for a community referral platform. The repository fol
 
 ## Product and project context
 
-Start with the [documentation knowledge base](documentation/README.md). It separates growing product, development, and design context. The consolidated [product context](documentation/product/product-context.md) captures the intent and open questions from the original MVP specification.
+Start with the [project knowledge base](docs/README.md). It organizes growing product, business, design, and development context in one place.
 
 ## Prerequisites
 
@@ -52,7 +52,7 @@ npm run db:migration -- descriptive_change_name
 npm run db:reset
 ```
 
-Never put `SUPABASE_SERVICE_ROLE_KEY`, email webhook secrets, or LLM secrets in frontend environment variables. See [docs/architecture.md](docs/architecture.md) for the security boundary and [docs/frontend-handoff.md](docs/frontend-handoff.md) for the coworker handoff.
+Never put `SUPABASE_SERVICE_ROLE_KEY`, email webhook secrets, or LLM secrets in frontend environment variables. See [architecture](docs/dev/architecture.md) for the security boundary and [frontend handoff](docs/dev/frontend-handoff.md) for the coworker handoff.
 
 ## Current V0 assumptions
 

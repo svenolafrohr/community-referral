@@ -1,5 +1,8 @@
 # Architecture
 
+**Status:** Accepted
+**Last reviewed:** 2026-08-24
+
 ## System boundary
 
 The browser reads active jobs and company summaries through the Supabase Data API. All writes use Edge Functions with the service-role key held only in Supabase secrets.
@@ -26,7 +29,7 @@ Every table has RLS enabled. Grants make the intended Data API surface explicit 
 
 ## Database workflow
 
-`supabase/schemas/` is declarative source of truth. Generated migrations go in `supabase/migrations/` and must be reviewed before committing. Foreign keys are indexed, active-list queries use partial indexes, timestamps are timezone-aware, and monetary values use fixed-precision numeric columns.
+`supabase/schemas/` is the declarative source of truth. Generated migrations go in `supabase/migrations/` and must be reviewed before committing. Foreign keys are indexed, active-list queries use partial indexes, timestamps are timezone-aware, and monetary values use fixed-precision numeric columns.
 
 ## Deferred decisions
 

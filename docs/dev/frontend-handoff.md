@@ -1,5 +1,8 @@
 # Frontend handoff
 
+**Status:** Accepted
+**Last reviewed:** 2026-08-24
+
 The frontend is intentionally a structural shell, not a finished UI.
 
 ## Stable contracts

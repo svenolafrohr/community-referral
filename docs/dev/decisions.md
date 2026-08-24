@@ -1,5 +1,8 @@
 # V0 decisions and assumptions
 
+**Status:** Accepted
+**Last reviewed:** 2026-08-24
+
 1. **Controlled-link access:** no end-user login in V0; public-read policies expose only active jobs.
 2. **Studio administration:** drafts, parsing corrections, and activation happen in Supabase Studio.
 3. **No candidate data by default:** the candidate email column is reserved but must remain unused until a consent flow exists.
