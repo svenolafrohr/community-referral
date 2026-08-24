@@ -15,3 +15,15 @@ export async function listActiveJobs(): Promise<Job[]> {
   if (error) throw error
   return rowsSchema.parse(data).map(mapJobRow)
 }
+
+export async function getJobBySlug(slug: string): Promise<Job | null> {
+  const { data, error } = await getSupabaseClient()
+    .from('jobs')
+    .select(jobSelect)
+    .eq('status', 'active')
+    .eq('slug', slug)
+    .maybeSingle()
+  if (error) throw error
+  if (!data) return null
+  return mapJobRow(data)
+}
