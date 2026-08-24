@@ -15,6 +15,14 @@ revoke all on table public.referral_events from anon, authenticated;
 revoke all on table public.ingestion_events from anon, authenticated;
 revoke all on function public.set_updated_at() from public, anon, authenticated;
 
+do $$
+begin
+  if to_regprocedure('public.rls_auto_enable()') is not null then
+    execute 'revoke all on function public.rls_auto_enable() from public, anon, authenticated';
+  end if;
+end;
+$$;
+
 grant usage on schema public to anon, authenticated, service_role;
 grant select on table public.companies, public.jobs to anon, authenticated;
 grant select, insert, update, delete on table
