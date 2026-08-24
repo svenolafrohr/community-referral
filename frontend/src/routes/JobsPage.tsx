@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import { JobCard } from '../features/jobs/components/JobCard'
 import { JobFilters } from '../features/jobs/components/JobFilters'
+import { JobList } from '../features/jobs/components/JobList'
+import { JobStack } from '../features/jobs/components/JobStack'
+import { ViewToggle, type ViewMode } from '../features/jobs/components/ViewToggle'
 import { listActiveJobs } from '../features/jobs/api'
 import { defaultJobFilterState, deriveFilterOptions, filterAndSortJobs, type JobFilterState } from '../features/jobs/filters'
 import type { Job } from '../features/jobs/model'
@@ -13,8 +17,10 @@ type LoadState =
   | { status: 'error'; message: string }
 
 export function JobsPage() {
+  const navigate = useNavigate()
   const [state, setState] = useState<LoadState>({ status: 'loading' })
   const [filters, setFilters] = useState<JobFilterState>(defaultJobFilterState)
+  const [viewMode, setViewMode] = useState<ViewMode>('grid')
 
   useEffect(() => {
     let active = true
@@ -75,13 +81,18 @@ export function JobsPage() {
 
       {state.status === 'success' && jobs.length > 0 && (
         <>
-          <JobFilters state={filters} options={options} onChange={setFilters} />
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <JobFilters state={filters} options={options} onChange={setFilters} />
+            <ViewToggle value={viewMode} onChange={setViewMode} />
+          </div>
 
           {visibleJobs.length === 0 ? (
             <p className="rounded-2xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
               No jobs match these filters. Try a different combination.
             </p>
-          ) : (
+          ) : viewMode === 'list' ? (
+            <JobList jobs={visibleJobs} />
+          ) : viewMode === 'grid' ? (
             <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {visibleJobs.map((job) => (
                 <li key={job.id}>
@@ -89,6 +100,8 @@ export function JobsPage() {
                 </li>
               ))}
             </ul>
+          ) : (
+            <JobStack jobs={visibleJobs} onOpenDetails={(job) => navigate(`/jobs/${job.slug}`)} />
           )}
         </>
       )}
