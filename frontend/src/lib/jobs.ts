@@ -1,188 +1,111 @@
-export type RemoteType = "remote" | "hybrid" | "onsite"
+import { z } from "zod"
 
-export type Job = {
+import { getSupabaseClient } from "./supabase"
+
+export type JobStatus = "draft" | "active" | "archived"
+export type RemotePolicy = "remote" | "hybrid" | "onsite" | "flexible" | "unspecified"
+
+export interface CompanySummary {
   id: string
+  name: string
+  slug: string
+  logoUrl: string | null
+}
+
+export interface Job {
+  id: string
+  slug: string
   title: string
-  company: string
-  companyInitials: string
-  location: string
-  remote: RemoteType
-  department: string
-  bonus: number
-  postedDaysAgo: number
-  about: string
-  requirements: string[]
-  benefits: string[]
+  description: string
+  summary: string | null
+  location: string | null
+  remotePolicy: RemotePolicy
+  seniority: string | null
+  functionArea: string | null
+  community: string
+  referralBonusAmount: number | null
+  referralBonusCurrency: string
+  status: JobStatus
+  publishedAt: string | null
+  createdAt: string
+  company: CompanySummary
 }
 
-export const remoteLabels: Record<RemoteType, string> = {
-  remote: "Remote",
-  hybrid: "Hybrid",
-  onsite: "Vor Ort",
+const companyRowSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1),
+  slug: z.string().min(1),
+  logo_url: z.string().url().nullable(),
+})
+
+const jobRowSchema = z.object({
+  id: z.string().uuid(),
+  slug: z.string().min(1),
+  title: z.string().min(1),
+  description: z.string().min(1),
+  summary: z.string().nullable(),
+  location: z.string().nullable(),
+  remote_policy: z.enum(["remote", "hybrid", "onsite", "flexible", "unspecified"]),
+  seniority: z.string().nullable(),
+  function_area: z.string().nullable(),
+  community: z.string().min(1),
+  referral_bonus_amount: z.number().nonnegative().nullable(),
+  referral_bonus_currency: z.string().length(3),
+  status: z.enum(["draft", "active", "archived"]),
+  published_at: z.string().datetime({ offset: true }).nullable(),
+  created_at: z.string().datetime({ offset: true }),
+  companies: companyRowSchema,
+})
+
+function mapJobRow(input: unknown): Job {
+  const row = jobRowSchema.parse(input)
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    description: row.description,
+    summary: row.summary,
+    location: row.location,
+    remotePolicy: row.remote_policy,
+    seniority: row.seniority,
+    functionArea: row.function_area,
+    community: row.community,
+    referralBonusAmount: row.referral_bonus_amount,
+    referralBonusCurrency: row.referral_bonus_currency,
+    status: row.status,
+    publishedAt: row.published_at,
+    createdAt: row.created_at,
+    company: {
+      id: row.companies.id,
+      name: row.companies.name,
+      slug: row.companies.slug,
+      logoUrl: row.companies.logo_url,
+    },
+  }
 }
 
-export const departments = [
-  "Engineering",
-  "Sales",
-  "Produkt",
-  "Finance",
-  "R&D",
-  "Gesundheitswesen",
-  "Handel",
-  "Operations",
-] as const
+const rowsSchema = z.array(z.unknown())
+const jobSelect =
+  "id, slug, title, description, summary, location, remote_policy, seniority, function_area, community, referral_bonus_amount, referral_bonus_currency, status, published_at, created_at, companies!inner(id, name, slug, logo_url)"
 
-export const jobs: Job[] = [
-  {
-    id: "j1",
-    title: "Senior Backend Engineer",
-    company: "Kestrel Software",
-    companyInitials: "KS",
-    location: "Berlin",
-    remote: "hybrid",
-    department: "Engineering",
-    bonus: 1500,
-    postedDaysAgo: 3,
-    about:
-      "Du verantwortest die Weiterentwicklung unserer Zahlungs-Infrastruktur und arbeitest eng mit dem Platform-Team zusammen, um Skalierbarkeit und Zuverlässigkeit sicherzustellen.",
-    requirements: [
-      "5+ Jahre Erfahrung mit verteilten Systemen (Go, TypeScript)",
-      "Erfahrung mit PostgreSQL und Event-driven Architekturen",
-      "Fließend Deutsch oder Englisch",
-    ],
-    benefits: ["Remote-flexibel", "Firmen-Equity", "Weiterbildungsbudget"],
-  },
-  {
-    id: "j2",
-    title: "Head of Sales DACH",
-    company: "Nordwind Logistics",
-    companyInitials: "NL",
-    location: "Hamburg",
-    remote: "onsite",
-    department: "Sales",
-    bonus: 1200,
-    postedDaysAgo: 12,
-    about:
-      "Du baust unser DACH-Vertriebsteam auf und verantwortest die Umsatzverantwortung für den größten Wachstumsmarkt des Unternehmens.",
-    requirements: [
-      "8+ Jahre B2B-Vertriebserfahrung, davon 3+ in Führung",
-      "Track Record im Aufbau von Vertriebsteams",
-      "Verhandlungssicheres Deutsch und Englisch",
-    ],
-    benefits: ["Firmenwagen", "Variable Vergütung", "30 Tage Urlaub"],
-  },
-  {
-    id: "j3",
-    title: "Produktmanager (m/w/d)",
-    company: "Ampel Retail",
-    companyInitials: "AR",
-    location: "Köln",
-    remote: "hybrid",
-    department: "Produkt",
-    bonus: 700,
-    postedDaysAgo: 6,
-    about:
-      "Du verantwortest die Produkt-Roadmap für unsere Checkout-Erfahrung und arbeitest crossfunktional mit Design und Engineering.",
-    requirements: [
-      "3+ Jahre Produktmanagement-Erfahrung im E-Commerce",
-      "Sicherer Umgang mit Daten und A/B-Testing",
-      "Ausgeprägtes Nutzer-Empathie",
-    ],
-    benefits: ["Hybrid-Arbeiten", "Mitarbeiterrabatte", "Sabbatical-Option"],
-  },
-  {
-    id: "j4",
-    title: "Bauleiter Hochbau",
-    company: "Havelbau GmbH",
-    companyInitials: "HB",
-    location: "Leipzig",
-    remote: "onsite",
-    department: "Operations",
-    bonus: 900,
-    postedDaysAgo: 20,
-    about:
-      "Du übernimmst die Bauleitung anspruchsvoller Hochbauprojekte im Raum Leipzig und führst ein Team aus Poliers und Subunternehmern.",
-    requirements: [
-      "Abgeschlossenes Studium Bauingenieurwesen oder vergleichbar",
-      "5+ Jahre Erfahrung in der Bauleitung",
-      "Führerschein Klasse B",
-    ],
-    benefits: ["Firmenwagen auch privat", "Projektboni", "Altersvorsorge"],
-  },
-  {
-    id: "j5",
-    title: "Financial Controller",
-    company: "Bergfeld Consulting",
-    companyInitials: "BC",
-    location: "Frankfurt",
-    remote: "hybrid",
-    department: "Finance",
-    bonus: 800,
-    postedDaysAgo: 9,
-    about:
-      "Du verantwortest das monatliche Reporting sowie die Budgetplanung für mehrere Geschäftsbereiche und bist Sparringspartner der Geschäftsführung.",
-    requirements: [
-      "Abgeschlossenes Studium mit Schwerpunkt Finance/Controlling",
-      "3+ Jahre Berufserfahrung im Controlling",
-      "Sehr gute Excel-Kenntnisse",
-    ],
-    benefits: ["Flexible Arbeitszeiten", "Jobticket", "Bonusprogramm"],
-  },
-  {
-    id: "j6",
-    title: "Robotics Test Engineer",
-    company: "Fjord Robotics",
-    companyInitials: "FR",
-    location: "München",
-    remote: "onsite",
-    department: "R&D",
-    bonus: 1300,
-    postedDaysAgo: 4,
-    about:
-      "Du entwickelst und führst Testverfahren für unsere autonomen Robotiksysteme durch und arbeitest eng mit dem Hardware-Team zusammen.",
-    requirements: [
-      "Studium Robotik, Mechatronik oder vergleichbar",
-      "Erfahrung mit ROS und Python",
-      "Freude an praktischer Testarbeit im Labor",
-    ],
-    benefits: ["Modernes Labor", "Konferenzbudget", "Firmenfahrrad"],
-  },
-  {
-    id: "j7",
-    title: "Pflegefachkraft Intensivstation",
-    company: "Meridian Health",
-    companyInitials: "MH",
-    location: "Stuttgart",
-    remote: "onsite",
-    department: "Gesundheitswesen",
-    bonus: 1500,
-    postedDaysAgo: 2,
-    about:
-      "Du versorgst Patient:innen auf unserer Intensivstation und bringst dich aktiv in die Weiterentwicklung unserer Pflegestandards ein.",
-    requirements: [
-      "Examinierte Pflegefachkraft mit Fachweiterbildung Intensiv",
-      "Teamfähigkeit und Belastbarkeit im Schichtdienst",
-      "Empathischer Umgang mit Patient:innen und Angehörigen",
-    ],
-    benefits: ["Schichtzulagen", "Kinderbetreuungszuschuss", "Fortbildungen"],
-  },
-  {
-    id: "j8",
-    title: "Regionalleiter Vertrieb",
-    company: "Ampel Retail",
-    companyInitials: "AR",
-    location: "Remote",
-    remote: "remote",
-    department: "Sales",
-    bonus: 500,
-    postedDaysAgo: 15,
-    about:
-      "Du verantwortest den Vertriebserfolg mehrerer Filialen in deiner Region und coachst die lokalen Store-Manager:innen.",
-    requirements: [
-      "Erfahrung in der Führung von Filialstrukturen",
-      "Reisebereitschaft innerhalb der Region",
-      "Unternehmerisches Denken",
-    ],
-    benefits: ["Firmenwagen", "Homeoffice-Ausstattung", "Bonusprogramm"],
-  },
-]
+export async function listActiveJobs(): Promise<Job[]> {
+  const { data, error } = await getSupabaseClient()
+    .from("jobs")
+    .select(jobSelect)
+    .eq("status", "active")
+    .order("published_at", { ascending: false, nullsFirst: false })
+  if (error) throw error
+  return rowsSchema.parse(data).map(mapJobRow)
+}
+
+export async function getJobBySlug(slug: string): Promise<Job | null> {
+  const { data, error } = await getSupabaseClient()
+    .from("jobs")
+    .select(jobSelect)
+    .eq("status", "active")
+    .eq("slug", slug)
+    .maybeSingle()
+  if (error) throw error
+  if (!data) return null
+  return mapJobRow(data)
+}

@@ -4,8 +4,9 @@ import { type ReactElement, useEffect, useRef } from "react"
 import { Copy, Mail, MessageCircle } from "lucide-react"
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { formatBonus } from "@/components/referrer/bonus-badge"
+import { formatReferralBonus } from "@/lib/format"
 import type { Job } from "@/lib/jobs"
+import { buildJobShareUrl, createReferral, type CreatedReferral } from "@/lib/referrals"
 
 function LinkedinIcon({ className }: { className?: string }) {
   return (
@@ -20,11 +21,27 @@ function LinkedinIcon({ className }: { className?: string }) {
   )
 }
 
-function jobShareUrl(job: Job) {
-  if (typeof window === "undefined") return ""
-  const url = new URL(window.location.origin + window.location.pathname)
-  url.searchParams.set("job", job.id)
-  return url.toString()
+// One referral per job per session — every share channel for the same job
+// reuses the same tracked code instead of minting a new `referrals` row
+// per click.
+const referralCache = new Map<string, Promise<CreatedReferral | null>>()
+
+function getReferral(job: Job): Promise<CreatedReferral | null> {
+  let cached = referralCache.get(job.id)
+  if (!cached) {
+    cached = createReferral(job.id).catch(() => null)
+    referralCache.set(job.id, cached)
+  }
+  return cached
+}
+
+// Falls back to an untracked job link if the create-referral call fails
+// (e.g. Supabase isn't configured) so sharing still works.
+async function resolveShareUrl(job: Job): Promise<string> {
+  const referral = await getReferral(job)
+  return referral
+    ? buildJobShareUrl(referral.jobSlug, referral.code)
+    : buildJobShareUrl(job.slug)
 }
 
 function ShareOption({
@@ -72,50 +89,57 @@ export function ShareMenu({
   job: Job
   trigger: ReactElement
 }) {
-  const url = jobShareUrl(job)
-  const text = `${job.title} bei ${job.company} — ${formatBonus(job.bonus)} Empfehlungsprämie`
+  const text = `${job.title} bei ${job.company.name} — ${formatReferralBonus(job.referralBonusAmount, job.referralBonusCurrency)} Empfehlungsprämie`
 
   function copyLink(button: HTMLButtonElement) {
-    try {
-      navigator.clipboard?.writeText(url)?.catch(() => {})
-    } catch {
-      // clipboard unavailable — still show confirmation, link is in the button below
-    }
-
     const label = button.querySelector(".option-label")
     const iconSlot = button.querySelector("span")
     if (!label || !iconSlot) return
     const originalLabel = label.textContent
     const originalIcon = iconSlot.innerHTML
-    label.textContent = "Link kopiert"
-    iconSlot.innerHTML =
-      '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-foreground"><path d="M20 6 9 17l-5-5"/></svg>'
-    window.setTimeout(() => {
-      if (label) label.textContent = originalLabel
-      if (iconSlot) iconSlot.innerHTML = originalIcon
-    }, 1800)
+
+    void resolveShareUrl(job).then((url) => {
+      try {
+        navigator.clipboard?.writeText(url)?.catch(() => {})
+      } catch {
+        // clipboard unavailable — the link is still in the address the share opened
+      }
+      label.textContent = "Link kopiert"
+      iconSlot.innerHTML =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-foreground"><path d="M20 6 9 17l-5-5"/></svg>'
+      window.setTimeout(() => {
+        label.textContent = originalLabel
+        iconSlot.innerHTML = originalIcon
+      }, 1800)
+    })
   }
 
   function openMail() {
-    window.location.href = `mailto:?subject=${encodeURIComponent(
-      `${job.title} bei ${job.company}`
-    )}&body=${encodeURIComponent(`${text}\n\n${url}`)}`
+    void resolveShareUrl(job).then((url) => {
+      window.location.href = `mailto:?subject=${encodeURIComponent(
+        `${job.title} bei ${job.company.name}`
+      )}&body=${encodeURIComponent(`${text}\n\n${url}`)}`
+    })
   }
 
   function openLinkedIn() {
-    window.open(
-      `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`,
-      "_blank",
-      "noopener,noreferrer"
-    )
+    // Popups opened after an await are blocked by most browsers unless the
+    // window is opened synchronously first and redirected once ready.
+    const popup = window.open("", "_blank", "noopener,noreferrer")
+    void resolveShareUrl(job).then((url) => {
+      const target = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`
+      if (popup) popup.location.href = target
+      else window.open(target, "_blank", "noopener,noreferrer")
+    })
   }
 
   function openWhatsApp() {
-    window.open(
-      `https://wa.me/?text=${encodeURIComponent(`${text}\n${url}`)}`,
-      "_blank",
-      "noopener,noreferrer"
-    )
+    const popup = window.open("", "_blank", "noopener,noreferrer")
+    void resolveShareUrl(job).then((url) => {
+      const target = `https://wa.me/?text=${encodeURIComponent(`${text}\n${url}`)}`
+      if (popup) popup.location.href = target
+      else window.open(target, "_blank", "noopener,noreferrer")
+    })
   }
 
   return (

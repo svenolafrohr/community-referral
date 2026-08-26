@@ -9,13 +9,15 @@ import {
   useTransform,
   type PanInfo,
 } from "framer-motion"
-import { Building2, MapPin, Send, X } from "lucide-react"
+import { MapPin, Send, X } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
+import { CompanyLogo } from "@/components/referrer/company-logo"
 import { JobDetailModal } from "@/components/referrer/job-detail-modal"
 import { BonusBadge } from "@/components/referrer/bonus-badge"
 import { ShareMenu } from "@/components/referrer/share-menu"
-import { remoteLabels, type Job } from "@/lib/jobs"
+import { formatPublishedDate, formatRemotePolicy } from "@/lib/format"
+import type { Job } from "@/lib/jobs"
 
 const SWIPE_THRESHOLD = 120
 const STACK_HEIGHT = 560
@@ -28,12 +30,6 @@ function Pill({ children }: { children: ReactNode }) {
       {children}
     </Badge>
   )
-}
-
-function postedLabel(days: number) {
-  if (days <= 0) return "Heute gepostet"
-  if (days === 1) return "Vor 1 Tag gepostet"
-  return `Vor ${days} Tagen gepostet`
 }
 
 function StackCard({
@@ -103,31 +99,33 @@ function StackCard({
 
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <div
-              aria-hidden
-              className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-muted text-muted-foreground/70 ring-1 ring-black/[0.04]"
-            >
-              <Building2 className="size-5" />
-            </div>
+            <CompanyLogo company={job.company} size="lg" />
             <div className="min-w-0">
               <p className="truncate text-base font-semibold text-foreground">
-                {job.company}
+                {job.company.name}
               </p>
               <p className="text-xs text-muted-foreground">
-                {postedLabel(job.postedDaysAgo)}
+                {formatPublishedDate(job.publishedAt)}
               </p>
             </div>
           </div>
-          <BonusBadge amount={job.bonus} size="lg" className="mt-0.5 shrink-0" />
+          <BonusBadge
+            amount={job.referralBonusAmount}
+            currency={job.referralBonusCurrency}
+            size="lg"
+            className="mt-0.5 shrink-0"
+          />
         </div>
 
         <div className="mt-5 flex flex-wrap gap-2">
-          <Pill>{job.department}</Pill>
-          <Pill>{remoteLabels[job.remote]}</Pill>
-          <Pill>
-            <MapPin className="size-3" />
-            {job.location}
-          </Pill>
+          {job.functionArea && <Pill>{job.functionArea}</Pill>}
+          <Pill>{formatRemotePolicy(job.remotePolicy)}</Pill>
+          {job.location && (
+            <Pill>
+              <MapPin className="size-3" />
+              {job.location}
+            </Pill>
+          )}
         </div>
 
         <h3 className="mt-5 line-clamp-2 text-2xl leading-tight font-bold tracking-tight text-foreground">
@@ -135,7 +133,7 @@ function StackCard({
         </h3>
 
         <p className="mt-3 line-clamp-4 flex-1 text-[15px] leading-relaxed text-muted-foreground">
-          {job.about}
+          {job.summary ?? job.description}
         </p>
 
         {isTop && (
@@ -199,10 +197,7 @@ export function JobStack({ jobs }: { jobs: Job[] }) {
 
   return (
     <div className="flex flex-col items-center">
-      <div
-        className="relative w-full max-w-sm"
-        style={{ height: STACK_HEIGHT }}
-      >
+      <div className="relative w-full max-w-sm" style={{ height: STACK_HEIGHT }}>
         <AnimatePresence initial={false}>
           {slots.map(({ job, offset }) => (
             <StackCard
@@ -219,13 +214,8 @@ export function JobStack({ jobs }: { jobs: Job[] }) {
 
       <JobDetailModal
         job={viewJob}
-        initialMode="details"
         onOpenChange={(open) => {
           if (!open) setViewJob(null)
-        }}
-        onReferred={() => {
-          setViewJob(null)
-          advance("right")
         }}
       />
     </div>

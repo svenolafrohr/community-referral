@@ -2,18 +2,14 @@
 
 import type { ReactNode } from "react"
 import { motion } from "framer-motion"
-import { Building2, MapPin, Send } from "lucide-react"
+import { MapPin, Send } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { BonusBadge } from "@/components/referrer/bonus-badge"
+import { CompanyLogo } from "@/components/referrer/company-logo"
 import { ShareMenu } from "@/components/referrer/share-menu"
-import { remoteLabels, type Job } from "@/lib/jobs"
-
-function postedLabel(days: number) {
-  if (days <= 0) return "Heute gepostet"
-  if (days === 1) return "Vor 1 Tag gepostet"
-  return `Vor ${days} Tagen gepostet`
-}
+import { formatPublishedDate, formatRemotePolicy } from "@/lib/format"
+import type { Job } from "@/lib/jobs"
 
 function Pill({ children }: { children: ReactNode }) {
   return (
@@ -57,21 +53,16 @@ export function JobCardGrid({
           className="group flex h-full cursor-pointer flex-col gap-4 rounded-2xl border border-border/70 bg-card p-5 outline-none transition-all duration-300 hover:border-border/90 hover:shadow-[0_2px_4px_rgba(0,0,0,0.02),0_20px_32px_-22px_rgba(0,0,0,0.18)] focus-visible:ring-2 focus-visible:ring-ring/50"
         >
           <div className="grid grid-cols-[36px_1fr_auto] items-center gap-x-2.5">
-            <div
-              aria-hidden
-              className="flex size-9 items-center justify-center rounded-xl bg-muted text-muted-foreground/70"
-            >
-              <Building2 className="size-4" />
-            </div>
+            <CompanyLogo company={job.company} size="sm" />
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-foreground">
-                {job.company}
+                {job.company.name}
               </p>
               <p className="text-xs text-muted-foreground">
-                {postedLabel(job.postedDaysAgo)}
+                {formatPublishedDate(job.publishedAt)}
               </p>
             </div>
-            <BonusBadge amount={job.bonus} />
+            <BonusBadge amount={job.referralBonusAmount} currency={job.referralBonusCurrency} />
           </div>
 
           <div className="min-h-[4.75rem]">
@@ -79,19 +70,19 @@ export function JobCardGrid({
               {job.title}
             </h3>
             <p className="mt-1.5 line-clamp-2 min-h-[2.4em] text-[13px] leading-relaxed text-muted-foreground">
-              {job.about}
+              {job.summary ?? job.description}
             </p>
           </div>
 
           <div className="flex flex-wrap gap-1.5">
-            <Pill>{job.department}</Pill>
-            <Pill>{remoteLabels[job.remote]}</Pill>
+            {job.functionArea && <Pill>{job.functionArea}</Pill>}
+            <Pill>{formatRemotePolicy(job.remotePolicy)}</Pill>
           </div>
 
           <div className="mt-auto flex items-center justify-between border-t border-border/60 pt-3">
             <span className="flex items-center gap-1 text-xs text-muted-foreground">
               <MapPin className="size-3" />
-              {job.location}
+              {job.location ?? job.community}
             </span>
             <ShareMenu
               job={job}

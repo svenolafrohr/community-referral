@@ -7,15 +7,20 @@ import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { departments, remoteLabels, type RemoteType } from "@/lib/jobs"
+import { formatRemotePolicy, remotePolicyOptions } from "@/lib/format"
+import type { RemotePolicy } from "@/lib/jobs"
 
 export type JobFiltersState = {
   search: string
-  departments: string[]
-  remote: RemoteType[]
+  functionAreas: string[]
+  remotePolicies: RemotePolicy[]
+  communities: string[]
 }
 
-const remoteOptions = Object.entries(remoteLabels) as [RemoteType, string][]
+export type JobFilterOptions = {
+  functionAreas: string[]
+  communities: string[]
+}
 
 function FilterGroup({
   label,
@@ -28,6 +33,7 @@ function FilterGroup({
   selected: string[]
   onToggle: (value: string) => void
 }) {
+  if (options.length === 0) return null
   return (
     <div className="flex flex-col gap-1">
       <p className="px-2 text-xs font-medium text-muted-foreground">{label}</p>
@@ -52,25 +58,35 @@ function FilterGroup({
 export function JobFilters({
   filters,
   onChange,
+  options,
 }: {
   filters: JobFiltersState
   onChange: (filters: JobFiltersState) => void
+  options: JobFilterOptions
 }) {
-  const activeFilterCount = filters.departments.length + filters.remote.length
+  const activeFilterCount =
+    filters.functionAreas.length + filters.remotePolicies.length + filters.communities.length
 
-  function toggleDepartment(value: string) {
-    const next = filters.departments.includes(value)
-      ? filters.departments.filter((department) => department !== value)
-      : [...filters.departments, value]
-    onChange({ ...filters, departments: next })
+  function toggleFunctionArea(value: string) {
+    const next = filters.functionAreas.includes(value)
+      ? filters.functionAreas.filter((area) => area !== value)
+      : [...filters.functionAreas, value]
+    onChange({ ...filters, functionAreas: next })
   }
 
-  function toggleRemote(value: string) {
-    const remoteValue = value as RemoteType
-    const next = filters.remote.includes(remoteValue)
-      ? filters.remote.filter((remote) => remote !== remoteValue)
-      : [...filters.remote, remoteValue]
-    onChange({ ...filters, remote: next })
+  function toggleRemotePolicy(value: string) {
+    const remoteValue = value as RemotePolicy
+    const next = filters.remotePolicies.includes(remoteValue)
+      ? filters.remotePolicies.filter((policy) => policy !== remoteValue)
+      : [...filters.remotePolicies, remoteValue]
+    onChange({ ...filters, remotePolicies: next })
+  }
+
+  function toggleCommunity(value: string) {
+    const next = filters.communities.includes(value)
+      ? filters.communities.filter((community) => community !== value)
+      : [...filters.communities, value]
+    onChange({ ...filters, communities: next })
   }
 
   return (
@@ -97,7 +113,9 @@ export function JobFilters({
           {activeFilterCount > 0 && (
             <button
               type="button"
-              onClick={() => onChange({ ...filters, departments: [], remote: [] })}
+              onClick={() =>
+                onChange({ ...filters, functionAreas: [], remotePolicies: [], communities: [] })
+              }
               className="text-xs font-medium text-muted-foreground hover:text-foreground"
             >
               Zurücksetzen
@@ -107,19 +125,29 @@ export function JobFilters({
         <Separator className="my-1" />
         <FilterGroup
           label="Abteilung"
-          options={departments.map((department) => ({
-            value: department,
-            label: department,
-          }))}
-          selected={filters.departments}
-          onToggle={toggleDepartment}
+          options={options.functionAreas.map((area) => ({ value: area, label: area }))}
+          selected={filters.functionAreas}
+          onToggle={toggleFunctionArea}
         />
         <Separator className="my-1" />
         <FilterGroup
           label="Standort"
-          options={remoteOptions.map(([value, label]) => ({ value, label }))}
-          selected={filters.remote}
-          onToggle={toggleRemote}
+          options={remotePolicyOptions.map((policy) => ({
+            value: policy,
+            label: formatRemotePolicy(policy),
+          }))}
+          selected={filters.remotePolicies}
+          onToggle={toggleRemotePolicy}
+        />
+        <Separator className="my-1" />
+        <FilterGroup
+          label="Community"
+          options={options.communities.map((community) => ({
+            value: community,
+            label: community,
+          }))}
+          selected={filters.communities}
+          onToggle={toggleCommunity}
         />
       </PopoverContent>
     </Popover>
