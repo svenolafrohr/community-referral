@@ -2,12 +2,11 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import { Badge } from '../components/ui/Badge'
+import { CompanyLogo } from '../features/jobs/components/CompanyLogo'
 import { getJobBySlug } from '../features/jobs/api'
 import { formatPublishedDate, formatReferralBonus, formatRemotePolicy } from '../features/jobs/format'
 import type { Job } from '../features/jobs/model'
 import { ShareActions } from '../features/referrals/components/ShareActions'
-import { buildJobShareUrl } from '../features/referrals/share'
-import { env } from '../lib/env'
 import { ConfigurationError } from '../lib/errors'
 
 type LoadState =
@@ -82,7 +81,6 @@ export function JobDetailPage() {
   }
 
   const { job } = state
-  const shareUrl = buildJobShareUrl(env.VITE_APP_URL, job.slug)
 
   return (
     <section className="flex flex-col gap-8 py-10 sm:py-14">
@@ -91,7 +89,10 @@ export function JobDetailPage() {
       </Link>
 
       <header className="flex flex-col gap-3">
-        <p className="text-sm font-medium text-muted-foreground">{job.company.name}</p>
+        <div className="flex items-center gap-3">
+          <CompanyLogo company={job.company} size="lg" />
+          <p className="text-sm font-medium text-muted-foreground">{job.company.name}</p>
+        </div>
         <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">{job.title}</h1>
         <div className="flex flex-wrap items-center gap-1.5">
           <Badge variant="neutral">{formatRemotePolicy(job.remotePolicy)}</Badge>
@@ -120,10 +121,10 @@ export function JobDetailPage() {
         <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">{job.description}</p>
       </div>
 
-      <div className="flex flex-col gap-2 border-t border-border pt-6">
+      <div className="flex flex-col items-start gap-2 border-t border-border pt-6">
         <h2 className="text-sm font-semibold text-foreground">Share this role</h2>
         <p className="text-sm text-muted-foreground">{formatPublishedDate(job.publishedAt)}</p>
-        <ShareActions url={shareUrl} jobTitle={job.title} companyName={job.company.name} />
+        <ShareActions job={job} />
       </div>
     </section>
   )

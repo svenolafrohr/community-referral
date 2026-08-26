@@ -5,6 +5,7 @@ import { JobCard } from '../features/jobs/components/JobCard'
 import { JobFilters } from '../features/jobs/components/JobFilters'
 import { JobList } from '../features/jobs/components/JobList'
 import { JobStack } from '../features/jobs/components/JobStack'
+import { SearchBar } from '../features/jobs/components/SearchBar'
 import { ViewToggle, type ViewMode } from '../features/jobs/components/ViewToggle'
 import { listActiveJobs } from '../features/jobs/api'
 import { defaultJobFilterState, deriveFilterOptions, filterAndSortJobs, type JobFilterState } from '../features/jobs/filters'
@@ -20,7 +21,7 @@ export function JobsPage() {
   const navigate = useNavigate()
   const [state, setState] = useState<LoadState>({ status: 'loading' })
   const [filters, setFilters] = useState<JobFilterState>(defaultJobFilterState)
-  const [viewMode, setViewMode] = useState<ViewMode>('grid')
+  const [viewMode, setViewMode] = useState<ViewMode>('stack')
 
   useEffect(() => {
     let active = true
@@ -49,7 +50,7 @@ export function JobsPage() {
 
   return (
     <section className="flex flex-col gap-8 py-10 sm:py-14">
-      <header className="flex flex-col gap-2">
+      <header className="flex flex-col items-center gap-2 text-center">
         <p className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
           Trusted opportunities
         </p>
@@ -60,6 +61,8 @@ export function JobsPage() {
           A lightweight referral board for trusted communities.
         </p>
       </header>
+
+      <SearchBar value={filters.search} onChange={(search) => setFilters((prev) => ({ ...prev, search }))} />
 
       {state.status === 'loading' && (
         <p role="status" className="text-sm text-muted-foreground">
@@ -81,7 +84,7 @@ export function JobsPage() {
 
       {state.status === 'success' && jobs.length > 0 && (
         <>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <JobFilters state={filters} options={options} onChange={setFilters} />
             <ViewToggle value={viewMode} onChange={setViewMode} />
           </div>
@@ -93,7 +96,7 @@ export function JobsPage() {
           ) : viewMode === 'list' ? (
             <JobList jobs={visibleJobs} />
           ) : viewMode === 'grid' ? (
-            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
               {visibleJobs.map((job) => (
                 <li key={job.id}>
                   <JobCard job={job} />

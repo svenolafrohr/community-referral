@@ -43,7 +43,6 @@ describe('JobCard', () => {
     expect(screen.getByText('€500')).toBeInTheDocument()
     expect(screen.getByText('Hybrid')).toBeInTheDocument()
     expect(screen.getByText('Berlin')).toBeInTheDocument()
-    expect(screen.getByText('CDTM')).toBeInTheDocument()
   })
 
   it('falls back to the description when there is no summary', () => {

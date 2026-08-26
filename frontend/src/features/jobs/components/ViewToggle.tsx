@@ -2,12 +2,12 @@ import { Layers, LayoutGrid, List } from 'lucide-react'
 
 import { cn } from '../../../lib/utils'
 
-export type ViewMode = 'list' | 'grid' | 'stack'
+export type ViewMode = 'stack' | 'grid' | 'list'
 
 const options: { mode: ViewMode; label: string; Icon: typeof List }[] = [
+  { mode: 'stack', label: 'Show as cards', Icon: Layers },
+  { mode: 'grid', label: 'Show as tiles', Icon: LayoutGrid },
   { mode: 'list', label: 'Show as list', Icon: List },
-  { mode: 'grid', label: 'Show as cards', Icon: LayoutGrid },
-  { mode: 'stack', label: 'Show as stack', Icon: Layers },
 ]
 
 export interface ViewToggleProps {

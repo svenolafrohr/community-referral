@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -60,7 +60,9 @@ describe('JobDetailPage', () => {
     expect(screen.getByText('Example Labs')).toBeInTheDocument()
     expect(screen.getByText('€500')).toBeInTheDocument()
     expect(screen.getByText('Build the product from zero to one.')).toBeInTheDocument()
-    expect(screen.getByRole('group', { name: /share this job/i })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /share this job/i }))
+    expect(screen.getByRole('menuitem', { name: /linkedin/i })).toBeInTheDocument()
   })
 
   it('shows a not-found state when the job does not exist', async () => {
