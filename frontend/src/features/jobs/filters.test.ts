@@ -44,27 +44,33 @@ describe('filterAndSortJobs', () => {
   const jobs = [
     makeJob({
       id: '1',
+      title: 'Founding Engineer',
       functionArea: 'Engineering',
       community: 'CDTM',
       remotePolicy: 'remote',
       referralBonusAmount: 500,
       publishedAt: '2026-08-20T12:00:00+00:00',
+      company: { id: 'c1', name: 'Kestrel', slug: 'kestrel', logoUrl: null },
     }),
     makeJob({
       id: '2',
+      title: 'Head of Sales',
       functionArea: 'Sales',
       community: 'WHU',
       remotePolicy: 'onsite',
       referralBonusAmount: 100,
       publishedAt: '2026-08-22T12:00:00+00:00',
+      company: { id: 'c2', name: 'Nordwind', slug: 'nordwind', logoUrl: null },
     }),
     makeJob({
       id: '3',
+      title: 'Product Designer',
       functionArea: 'Engineering',
       community: 'WHU',
       remotePolicy: 'hybrid',
       referralBonusAmount: null,
       publishedAt: '2026-08-21T12:00:00+00:00',
+      company: { id: 'c1', name: 'Kestrel', slug: 'kestrel', logoUrl: null },
     }),
   ]
 
@@ -76,14 +82,31 @@ describe('filterAndSortJobs', () => {
   it('filters by function area, remote policy, and community together', () => {
     const result = filterAndSortJobs(jobs, {
       ...defaultJobFilterState,
-      functionArea: 'Engineering',
-      community: 'CDTM',
+      functionAreas: ['Engineering'],
+      communities: ['CDTM'],
     })
     expect(result.map((job) => job.id)).toEqual(['1'])
+  })
+
+  it('matches multiple selected values within the same filter group', () => {
+    const result = filterAndSortJobs(jobs, {
+      ...defaultJobFilterState,
+      remotePolicies: ['remote', 'onsite'],
+    })
+    expect(result.map((job) => job.id).sort()).toEqual(['1', '2'])
   })
 
   it('sorts by bonus, treating a missing bonus as lowest', () => {
     const result = filterAndSortJobs(jobs, { ...defaultJobFilterState, sort: 'bonus' })
     expect(result.map((job) => job.id)).toEqual(['1', '2', '3'])
+  })
+
+  it('matches the search text against the title or company name', () => {
+    expect(
+      filterAndSortJobs(jobs, { ...defaultJobFilterState, search: 'sales' }).map((job) => job.id),
+    ).toEqual(['2'])
+    expect(
+      filterAndSortJobs(jobs, { ...defaultJobFilterState, search: 'kestrel' }).map((job) => job.id),
+    ).toEqual(['3', '1'])
   })
 })

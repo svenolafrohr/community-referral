@@ -2,6 +2,7 @@ import { MapPin } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import { Badge } from '../../../components/ui/Badge'
+import { CompanyLogo } from './CompanyLogo'
 import { formatReferralBonus, formatRemotePolicy } from '../format'
 import type { Job } from '../model'
 
@@ -18,6 +19,8 @@ export function JobList({ jobs }: JobListProps) {
             to={`/jobs/${job.slug}`}
             className="flex items-center gap-4 px-4 py-4 transition-colors hover:bg-muted/60 sm:px-5"
           >
+            <CompanyLogo company={job.company} className="hidden sm:flex" />
+
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-foreground">{job.title}</p>
               <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">

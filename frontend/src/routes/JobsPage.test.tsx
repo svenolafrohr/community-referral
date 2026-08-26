@@ -81,7 +81,20 @@ describe('JobsPage', () => {
     renderPage()
     await waitFor(() => expect(screen.getByText('Founding Engineer')).toBeInTheDocument())
 
-    fireEvent.change(screen.getByLabelText('Remote policy'), { target: { value: 'onsite' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Filter' }))
+    fireEvent.click(screen.getByRole('checkbox', { name: 'On-site' }))
+
+    expect(await screen.findByText(/no jobs match these filters/i)).toBeInTheDocument()
+  })
+
+  it('narrows the visible jobs by search text', async () => {
+    listActiveJobsMock.mockResolvedValue([job])
+    renderPage()
+    await waitFor(() => expect(screen.getByText('Founding Engineer')).toBeInTheDocument())
+
+    fireEvent.change(screen.getByRole('searchbox', { name: /search jobs/i }), {
+      target: { value: 'nonexistent role' },
+    })
 
     expect(await screen.findByText(/no jobs match these filters/i)).toBeInTheDocument()
   })

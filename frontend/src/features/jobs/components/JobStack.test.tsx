@@ -52,12 +52,11 @@ describe('JobStack', () => {
     expect(screen.getByText('Product Designer')).toBeInTheDocument()
   })
 
-  it('reveals share actions instead of a form when "Share this job" is clicked', () => {
+  it('opens the share menu instead of a form when "Share this job" is clicked', () => {
     render(<JobStack jobs={jobs} onOpenDetails={vi.fn()} />)
     fireEvent.click(screen.getByRole('button', { name: 'Share this job' }))
 
-    expect(screen.getByRole('group', { name: /share this job/i })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /whatsapp/i })).toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: /whatsapp/i })).toBeInTheDocument()
     expect(screen.queryByLabelText('Name')).not.toBeInTheDocument()
   })
 
@@ -67,19 +66,10 @@ describe('JobStack', () => {
 
     render(<JobStack jobs={jobs} onOpenDetails={vi.fn()} />)
     fireEvent.click(screen.getByRole('button', { name: 'Share this job' }))
-    fireEvent.click(screen.getAllByRole('button', { name: /copy link/i })[0]!)
+    fireEvent.click(screen.getByRole('menuitem', { name: /copy link/i }))
 
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith('Link copied'))
     await waitFor(() => expect(screen.getByText('Product Designer')).toBeInTheDocument())
-  })
-
-  it('returns to the normal card when "Back" is clicked', () => {
-    render(<JobStack jobs={jobs} onOpenDetails={vi.fn()} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Share this job' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
-
-    expect(screen.queryByRole('group', { name: /share this job/i })).not.toBeInTheDocument()
-    expect(screen.getByText('Founding Engineer')).toBeInTheDocument()
   })
 
   it('opens the job detail page when the card body is clicked', () => {

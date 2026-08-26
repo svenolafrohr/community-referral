@@ -2,19 +2,19 @@ import type { Job, RemotePolicy } from './model'
 
 export type SortOption = 'recent' | 'bonus'
 
-export const ALL_VALUE = 'all'
-
 export interface JobFilterState {
-  functionArea: string
-  remotePolicy: RemotePolicy | typeof ALL_VALUE
-  community: string
+  search: string
+  functionAreas: string[]
+  remotePolicies: RemotePolicy[]
+  communities: string[]
   sort: SortOption
 }
 
 export const defaultJobFilterState: JobFilterState = {
-  functionArea: ALL_VALUE,
-  remotePolicy: ALL_VALUE,
-  community: ALL_VALUE,
+  search: '',
+  functionAreas: [],
+  remotePolicies: [],
+  communities: [],
   sort: 'recent',
 }
 
@@ -39,10 +39,19 @@ function jobTimestamp(job: Job): number {
 }
 
 export function filterAndSortJobs(jobs: Job[], state: JobFilterState): Job[] {
+  const search = state.search.trim().toLowerCase()
+
   const filtered = jobs.filter((job) => {
-    if (state.functionArea !== ALL_VALUE && job.functionArea !== state.functionArea) return false
-    if (state.remotePolicy !== ALL_VALUE && job.remotePolicy !== state.remotePolicy) return false
-    if (state.community !== ALL_VALUE && job.community !== state.community) return false
+    if (search) {
+      const matchesSearch =
+        job.title.toLowerCase().includes(search) || job.company.name.toLowerCase().includes(search)
+      if (!matchesSearch) return false
+    }
+    if (state.functionAreas.length > 0 && (!job.functionArea || !state.functionAreas.includes(job.functionArea))) {
+      return false
+    }
+    if (state.remotePolicies.length > 0 && !state.remotePolicies.includes(job.remotePolicy)) return false
+    if (state.communities.length > 0 && !state.communities.includes(job.community)) return false
     return true
   })
 
